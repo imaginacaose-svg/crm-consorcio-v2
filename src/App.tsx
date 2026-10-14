@@ -1,14 +1,17 @@
-import { createClient } from '@supabase/supabase-js'
-
-// Substitua pelos seus dados reais do Supabase depois
-const supabase = createClient('https://teste.supabase.co', 'chave-teste')
+import { KanbanBoard } from './components/KanbanBoard'
 
 function App() {
   return (
-    <div style={{ padding: '40px', fontFamily: 'sans-serif', textAlign: 'center' }}>
-      <h1>🎉 CRM Consórcio v2</h1>
-      <p style={{ color: 'green', fontWeight: 'bold' }}>Se você está vendo isso, o build funcionou 100%!</p>
-      <p>O Supabase está configurado e o React está rodando.</p>
+    <div style={{ minHeight: '100vh', backgroundColor: '#f3f4f6' }}>
+      <div style={{ padding: '20px', backgroundColor: 'white', borderBottom: '1px solid #e5e7eb' }}>
+        <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', color: '#1f2937' }}>
+          🎯 CRM Consórcio - Kanban
+        </h1>
+        <p style={{ margin: '8px 0 0 0', color: '#6b7280' }}>
+          Gerencie seus leads e negociações
+        </p>
+      </div>
+      <KanbanBoard />
     </div>
   )
 }
