@@ -49,31 +49,34 @@ export function KanbanBoard() {
   }
 
   return (
-    <div style={{ display: 'flex', gap: '16px', padding: '24px', overflowX: 'auto' }}>
+    <div className="flex gap-4 overflow-x-auto">
       {stages.map(stage => {
         const stageDeals = deals.filter(d => d.stageId === stage.id)
         const totalValue = stageDeals.reduce((sum, d) => sum + (d.value || 0), 0)
 
         return (
-          <div key={stage.id} style={{ minWidth: '300px', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div style={{ padding: '16px', borderBottom: `4px solid ${stage.color}`, borderTopLeftRadius: '8px', borderTopRightRadius: '8px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ margin: 0, fontWeight: '600', color: '#1f2937' }}>{stage.title}</h3>
-                <span style={{ fontSize: '12px', backgroundColor: '#f3f4f6', padding: '4px 8px', borderRadius: '12px' }}>
+          <div key={stage.id} className="flex-shrink-0 w-80 bg-white rounded-lg shadow">
+            <div 
+              className="p-4 border-b-4 rounded-t-lg"
+              style={{ borderColor: stage.color }}
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-gray-800">{stage.title}</h3>
+                <span className="text-xs bg-gray-100 px-2 py-1 rounded-full">
                   {stageDeals.length}
                 </span>
               </div>
-              <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+              <p className="text-xs text-gray-500 mt-1">
                 Total: {formatCurrency(totalValue)}
               </p>
             </div>
 
-            <div style={{ padding: '12px', minHeight: '200px', backgroundColor: '#f9fafb' }}>
+            <div className="p-3 min-h-[200px] bg-gray-50">
               {stageDeals.map(deal => (
-                <div key={deal.id} style={{ backgroundColor: 'white', padding: '12px', borderRadius: '6px', marginBottom: '8px', border: '1px solid #e5e7eb', cursor: 'grab' }}>
-                  <h4 style={{ margin: 0, fontSize: '14px', fontWeight: '500', color: '#1f2937' }}>{deal.title}</h4>
+                <div key={deal.id} className="bg-white p-3 rounded shadow-sm mb-2 border border-gray-200 cursor-grab">
+                  <h4 className="font-medium text-sm text-gray-800">{deal.title}</h4>
                   {deal.value ? (
-                    <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#059669', fontWeight: '500' }}>
+                    <p className="text-xs text-green-600 font-medium mt-2">
                       💰 {formatCurrency(deal.value)}
                     </p>
                   ) : null}
@@ -81,9 +84,9 @@ export function KanbanBoard() {
               ))}
             </div>
 
-            <div style={{ padding: '12px', borderTop: '1px solid #e5e7eb' }}>
+            <div className="p-3 border-t">
               {activeStage === stage.id ? (
-                <div>
+                <div className="space-y-2">
                   <input
                     autoFocus
                     type="text"
@@ -91,18 +94,18 @@ export function KanbanBoard() {
                     onChange={e => setNewDealTitle(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleAddDeal(stage.id)}
                     placeholder="Título do negócio..."
-                    style={{ width: '100%', padding: '8px', fontSize: '14px', border: '1px solid #d1d5db', borderRadius: '4px', marginBottom: '8px' }}
+                    className="w-full px-2 py-1 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                  <div style={{ display: 'flex', gap: '8px' }}>
+                  <div className="flex gap-2">
                     <button
                       onClick={() => handleAddDeal(stage.id)}
-                      style={{ flex: 1, backgroundColor: '#3b82f6', color: 'white', fontSize: '12px', padding: '6px', borderRadius: '4px', border: 'none', cursor: 'pointer' }}
+                      className="flex-1 bg-blue-500 text-white text-xs py-1 rounded hover:bg-blue-600"
                     >
                       Adicionar
                     </button>
                     <button
                       onClick={() => setActiveStage(null)}
-                      style={{ fontSize: '12px', color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer' }}
+                      className="text-xs text-gray-500 hover:text-gray-700"
                     >
                       Cancelar
                     </button>
@@ -111,7 +114,7 @@ export function KanbanBoard() {
               ) : (
                 <button
                   onClick={() => setActiveStage(stage.id)}
-                  style={{ width: '100%', padding: '8px', fontSize: '14px', color: '#6b7280', backgroundColor: 'transparent', border: 'none', cursor: 'pointer' }}
+                  className="w-full text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 py-2 rounded transition-colors"
                 >
                   + Adicionar negócio
                 </button>
