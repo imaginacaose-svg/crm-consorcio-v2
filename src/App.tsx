@@ -1,84 +1,123 @@
-import { useState } from 'react';
-import { KanbanBoard } from './components/KanbanBoard';
+import { useEffect, useState } from "react";
+import type { Session } from "@supabase/supabase-js";
+import { supabase } from "./lib/supabase";
+import { getProfile, signOut } from "./lib/api";
+import type { Profile } from "./lib/types";
+import Login from "./pages/Login";
+import Pipeline from "./pages/Pipeline";
+import FollowUps from "./pages/FollowUps";
+import Relatorios from "./pages/Relatorios";
+import Equipe from "./pages/Equipe";
 
-type MenuItem = { id: string; label: string; icon: string };
+type Pagina = "pipeline" | "followups" | "relatorios" | "equipe";
 
-const MENU: MenuItem[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: '📊' },
-  { id: 'kanban', label: 'Pipeline (Kanban)', icon: '📋' },
-  { id: 'clientes', label: 'Clientes', icon: '👥' },
-  { id: 'relatorios', label: 'Relatórios', icon: '📈' },
-  { id: 'config', label: 'Configurações', icon: '⚙️' },
+const NAV: { id: Pagina; label: string; icone: string }[] = [
+  { id: "pipeline", label: "Pipeline", icone: "🗂️" },
+  { id: "followups", label: "Follow-ups", icone: "⏰" },
+  { id: "relatorios", label: "Relatórios", icone: "📊" },
+  { id: "equipe", label: "Equipe", icone: "👥" },
 ];
 
 export default function App() {
-  const [active, setActive] = useState('kanban');
-  const currentTitle = MENU.find(m => m.id === active)?.label ?? 'Pipeline';
+  const [sessao, setSessao] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [carregandoSessao, setCarregandoSessao] = useState(true);
+  const [pagina, setPagina] = useState<Pagina>("pipeline");
+
+  useEffect(() => {
+    supabase.auth.getSession().then(async ({ data }) => {
+      setSessao(data.session);
+      if (data.session) setProfile(await getProfile());
+      setCarregandoSessao(false);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setSessao(session);
+      setProfile(session ? await getProfile() : null);
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  if (carregandoSessao) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 text-sm text-slate-400">
+        Carregando…
+      </div>
+    );
+  }
+
+  if (!sessao) return <Login />;
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#f1f5f9', fontFamily: 'system-ui, sans-serif' }}>
-
-      {/* MENU LATERAL */}
-      <aside style={{ width: 240, flexShrink: 0, background: '#0f172a', color: '#e2e8f0', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ padding: '28px 22px', borderBottom: '1px solid #1e293b' }}>
-          <div style={{ fontSize: 20, fontWeight: 700, color: '#ffffff' }}>CRM Consórcio</div>
-          <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4 }}>Gestão comercial</div>
+    <div className="flex min-h-screen bg-slate-100">
+      {/* Sidebar */}
+      <aside className="hidden w-56 shrink-0 flex-col border-r border-slate-200 bg-white md:flex">
+        <div className="flex items-center gap-2 px-5 py-5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-lg text-white">🤝</div>
+          <div>
+            <p className="text-sm font-bold leading-tight text-slate-800">ConsórcioCRM</p>
+            <p className="text-[11px] text-slate-400">Pipeline & Leads</p>
+          </div>
         </div>
-
-        <nav style={{ padding: '16px 12px', flex: 1 }}>
-          {MENU.map(item => (
+        <nav className="mt-2 flex-1 space-y-1 px-3">
+          {NAV.map((item) => (
             <button
               key={item.id}
-              onClick={() => setActive(item.id)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 12,
-                width: '100%', padding: '12px 14px', marginBottom: 6,
-                border: 'none', borderLeft: active === item.id ? '3px solid #38bdf8' : '3px solid transparent',
-                borderRadius: 6, cursor: 'pointer', textAlign: 'left', fontSize: 14,
-                background: active === item.id ? '#1e293b' : 'transparent',
-                color: active === item.id ? '#ffffff' : '#94a3b8',
-                fontWeight: active === item.id ? 600 : 400,
-              }}
+              onClick={() => setPagina(item.id)}
+              className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm font-medium transition ${
+                pagina === item.id ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
+              }`}
             >
-              <span style={{ fontSize: 17 }}>{item.icon}</span>
-              {item.label}
+              <span>{item.icone}</span> {item.label}
             </button>
           ))}
         </nav>
-
-        <div style={{ padding: '18px 22px', fontSize: 11, color: '#64748b', borderTop: '1px solid #1e293b' }}>
-          ✅ BUILD 5 — FUNCIONANDO
+        <div className="border-t border-slate-100 p-3">
+          <div className="mb-2 flex items-center gap-2 px-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-sm font-bold text-emerald-700">
+              {(profile?.nome ?? "?").trim()[0]?.toUpperCase()}
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-xs font-semibold text-slate-700">{profile?.nome ?? sessao.user.email}</p>
+              <p className="truncate text-[11px] capitalize text-slate-400">{profile?.role ?? "membro"}</p>
+            </div>
+          </div>
+          <button
+            onClick={() => signOut()}
+            className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-50"
+          >
+            Sair
+          </button>
         </div>
       </aside>
 
-      {/* ÁREA PRINCIPAL */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-
-        <header style={{ background: '#ffffff', padding: '20px 32px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: '#0f172a' }}>{currentTitle}</h1>
-            <p style={{ margin: '4px 0 0', fontSize: 13, color: '#64748b' }}>Acompanhe suas negociações em um só lugar</p>
-          </div>
-          <div style={{ background: '#f1f5f9', borderRadius: 999, padding: '8px 16px', fontSize: 13, color: '#334155' }}>
-            👤 Minha Equipe
-          </div>
+      {/* Main */}
+      <main className="flex-1 overflow-x-hidden">
+        {/* Mobile header */}
+        <header className="sticky top-0 z-40 flex items-center gap-1 overflow-x-auto border-b border-slate-200 bg-white px-3 py-2 md:hidden">
+          <span className="mr-2 shrink-0 text-sm font-bold text-slate-800">🤝 CRM</span>
+          {NAV.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setPagina(item.id)}
+              className={`shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-medium ${
+                pagina === item.id ? "bg-indigo-50 text-indigo-700" : "text-slate-500"
+              }`}
+            >
+              {item.icone} {item.label}
+            </button>
+          ))}
+          <button onClick={() => signOut()} className="ml-auto shrink-0 rounded-lg px-2 py-1.5 text-xs text-slate-400">
+            Sair
+          </button>
         </header>
 
-        <main style={{ padding: 28 }}>
-
-          {active === 'kanban' && <KanbanBoard />}
-
-          {active !== 'kanban' && (
-            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 10, padding: 32 }}>
-              <h2 style={{ margin: '0 0 8px', fontSize: 18, color: '#0f172a' }}>{currentTitle}</h2>
-              <p style={{ color: '#64748b', fontSize: 14, margin: 0 }}>
-                Esta tela será conectada ao Supabase a seguir. Por enquanto, use o menu <strong>Pipeline (Kanban)</strong>.
-              </p>
-            </div>
-          )}
-
-        </main>
-      </div>
+        <div className="mx-auto max-w-7xl p-4 md:p-6">
+          {pagina === "pipeline" && <Pipeline profile={profile} />}
+          {pagina === "followups" && <FollowUps profile={profile} />}
+          {pagina === "relatorios" && <Relatorios />}
+          {pagina === "equipe" && <Equipe />}
+        </div>
+      </main>
     </div>
   );
 }
